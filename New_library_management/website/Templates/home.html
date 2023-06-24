@@ -1,0 +1,105 @@
+{% extends "base.html" %} {% block title %}Home{% endblock %} {% block content
+    %}
+    <!DOCTYPE html>
+<html>
+<head>
+  <title>Library Management Page</title>
+  <style>
+    #bookContainer {
+      margin-bottom: 20px;
+    }
+
+    .loading-message {
+      text-align: center;
+      font-style: italic;
+      color: gray;
+      margin-top: 10px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>List Of Books</h1>
+
+  <div id="bookContainer"></div>
+
+  <div class="loading-message">Loading more books...</div>
+
+  <script>
+    let page = 0; // Track the current page of books
+    const booksPerPage = 10; // Number of books to fetch per page
+    let isLoading = false; // Track the loading state to prevent simultaneous requests
+
+    const bookContainer = document.getElementById('bookContainer');
+    const loadingMessage = document.querySelector('.loading-message');
+
+    function fetchBooks() {
+      isLoading = true;
+      loadingMessage.style.display = 'block';
+
+      // Make an API request to fetch books for the current page
+      // Replace `YOUR_GOOGLE_API_KEY` with your actual Google Books API key
+      const apiKey = 'AIzaSyC2y0H46EAzAAd7XGqPRsM_iDq97pf7HdQ';
+      const apiUrl = `https://www.googleapis.com/books/v1/volumes?q=javascript&startIndex=${page * booksPerPage}&maxResults=${booksPerPage}&key=${apiKey}`;
+
+      fetch(apiUrl)
+        .then(response => response.json())
+        .then(data => {
+          // Handle the API response and extract the book data
+          const books = data.items.map(item => {
+            const book = item.volumeInfo;
+            return {
+              title: book.title,
+              author: book.authors ? book.authors.join(', ') : 'Unknown Author',
+              // Add more book details as needed
+            };
+          });
+
+          // Create HTML elements for the books
+          const bookElements = books.map(book => {
+            return `
+              <div class="book">
+                <h3>${book.title}</h3>
+                <p>${book.author}</p>
+                <!-- Add more book details as needed -->
+              </div>
+            `;
+          });
+
+          // Append the book elements to the container
+          bookContainer.innerHTML += bookElements.join('');
+
+          // Increment the page counter
+          page++;
+
+          isLoading = false;
+          loadingMessage.style.display = 'none';
+        })
+        .catch(error => {
+          console.error('Error fetching books:', error);
+          isLoading = false;
+          loadingMessage.style.display = 'none';
+        });
+    }
+
+    function handleScroll() {
+      // Check if the user has reached the bottom of the page
+      const isBottomReached =
+        window.innerHeight + window.scrollY >= document.body.offsetHeight;
+
+      // Fetch more books if the user has reached the bottom and no other request is in progress
+      if (isBottomReached && !isLoading) {
+        fetchBooks();
+      }
+    }
+
+    // Add a scroll event listener to trigger infinite scrolling
+    window.addEventListener('scroll', handleScroll);
+
+    // Fetch the initial set of books
+    fetchBooks();
+  </script>
+</body>
+</html>
+
+    {% endblock %}
